@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cc -o main main.c -lraylib -lm && ./main
+cc -o main main.c -lX11 -lraylib -lm && ./main
