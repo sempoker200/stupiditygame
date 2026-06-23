@@ -18,7 +18,14 @@
 
 
 // REGION: OBJECT STRUCTURES
+typedef enum {
+    OBJ_BTN,
+    OBJ_LABEL,
+    OBJ_BOX,
+    OBJ_MOVBOX
+} ObjType;
 typedef struct {
+    ObjType type;
     bool held;
     int rnd;
     int xpos;
@@ -33,6 +40,7 @@ typedef struct {
     void (*func)(void);
 } Button;
 typedef struct {
+    ObjType type;
     Color textCol;
     int xpos;
     int ypos;
@@ -41,18 +49,20 @@ typedef struct {
     bool enabled;
 } Label;
 typedef struct {
+    ObjType type;
     Color col;
-    int x;
-    int y;
+    float x;
+    float y;
     int w;
     int h;
-    int mass;
+    float mass;
     bool enabled;
 } MovableBox;
 typedef struct {
+    ObjType type;
     Color col;
-    int x;
-    int y;
+    float x;
+    float y;
     int w;
     int h;
     bool enabled;
@@ -68,31 +78,33 @@ typedef struct {
     Box *items;
 } DA_Box;
 
+
 // REGION: OBJECTS
-Button play = (Button){};
-Button pref = (Button){};
-Button cprf = (Button){};
-Button quit = (Button){};
-Button fntb = (Button){};
-Button bcgb = (Button){};
-Label fontl = (Label){};
-Label bckgl = (Label){};
-Box box1 = (Box){};
-Box box2 = (Box){};
-Box box3 = (Box){};
-Box box4 = (Box){};
-Box box5 = (Box){};
-Box box6 = (Box){};
-Box box7 = (Box){};
-MovableBox box8 = (MovableBox){};
-MovableBox box9 = (MovableBox){};
-MovableBox box10 = (MovableBox){};
-MovableBox box11 = (MovableBox){};
+Button play = (Button){OBJ_BTN};
+Button pref = (Button){OBJ_BTN};
+Button cprf = (Button){OBJ_BTN};
+Button quit = (Button){OBJ_BTN};
+Button fntb = (Button){OBJ_BTN};
+Button bcgb = (Button){OBJ_BTN};
+Label fontl = (Label){OBJ_LABEL};
+Label bckgl = (Label){OBJ_LABEL};
+Box box1 = (Box){OBJ_BOX};
+Box box2 = (Box){OBJ_BOX};
+Box box3 = (Box){OBJ_BOX};
+Box box4 = (Box){OBJ_BOX};
+Box box5 = (Box){OBJ_BOX};
+Box box6 = (Box){OBJ_BOX};
+Box box7 = (Box){OBJ_BOX};
+MovableBox box8 = (MovableBox){OBJ_MOVBOX};
+MovableBox box9 = (MovableBox){OBJ_MOVBOX};
+MovableBox box10 = (MovableBox){OBJ_MOVBOX};
+MovableBox box11 = (MovableBox){OBJ_MOVBOX};
 
 
 // REGION: USER PREFERENCES
 bool background = true;
 bool font = false;
+
 
 // REGION: GAME VARIABLES
 float dt = 1.f/60.f;
@@ -110,7 +122,6 @@ Vector2 camPos = {0};
 Vector2 dir = {0};
 float speed = 0.f;
 float dashScale = 0.f;
-MovableBox *pushing = NULL;
 
 
 // REGION: MATH FUNCTIONS
@@ -143,12 +154,12 @@ void optionsbtn(){
 }
 void switchbg(){
     background = !background;
-    bcgb.text = background ? "V" : "";
+    bcgb.text = background ? "X" : "";
 }
 void switchfont(){
     font = !font;
     fnt = font ? LoadFont("consola.ttf") : GetFontDefault();
-    fntb.text = font ? "V" : "";
+    fntb.text = font ? "X" : "";
 }
 void clsoptbtn(){
     play.enabled = true;
@@ -164,44 +175,73 @@ void exitbtn(){
     CloseWindow();
 }
 void playbtn(){
+    play.enabled = false;
+    pref.enabled = false;
+    quit.enabled = false;
+    cprf.enabled = false;
+    fntb.enabled = false;
+    bcgb.enabled = false;
+    fontl.enabled = false;
+    bckgl.enabled = false;
     game = true;
     green = LoadTexture("./green.png");
 
     // OBJECT CREATION
     box1 = (Box) {
-        GRAY,     40,   40,   100, 100,    true
+        OBJ_BOX,    GRAY,      40,   40,   100, 100,    true
     };
     box2 = (Box) {
-        BLUE,     160,  160,  200, 200,    true
+        OBJ_BOX,    BLUE,      160,  160,  200, 200,    true
     };
     box3 = (Box) {
-        RAYWHITE, 600,  160,  10,  200,    true
+        OBJ_BOX,    RAYWHITE,  600,  160,  10,  200,    true
     };
     box4 = (Box) {
-        RAYWHITE, 700,  160,  10,  200,    true
+        OBJ_BOX,    RAYWHITE,  700,  160,  10,  200,    true
     };
     box5 = (Box) {
-        RAYWHITE, 800,  160,  10,  200,    true
+        OBJ_BOX,    RAYWHITE,  800,  160,  10,  200,    true
     };
     box6 = (Box) {
-        RAYWHITE, 900,  160,  10,  200,    true
+        OBJ_BOX,    RAYWHITE,  900,  160,  10,  200,    true
     };
     box7 = (Box) {
-        RAYWHITE, 1000, 160,  10,  200,    true
+        OBJ_BOX,    RAYWHITE,  1000, 160,  10,  200,    true
     };
     box8 = (MovableBox) {
-        MAROON,   -100, -100, 50,  50,  1, true
+        OBJ_MOVBOX, MAROON,    -100, -100, 50,  50,  1, true
     };
     box9 = (MovableBox) {
-        MAROON,  -160, -100, 75,  75, 2, true
+        OBJ_MOVBOX, MAROON,    -160, -100, 50,  200, 2, true
     };
     box10 = (MovableBox) {
-        MAROON,    -160, 0,    50,  50,  1, true
+        OBJ_MOVBOX, MAROON,    -160, 0,    50,  50,  1, true
     };
     box11 = (MovableBox) {
-        MAROON,    -160, -200, 50,  50,  1, true
+        OBJ_MOVBOX, MAROON,    -160, -200, 50,  50,  1, true
     };
 }
+void *gameObjects[] = {
+     &play,
+     &pref,
+     &cprf,
+     &quit,
+     &fntb,
+     &bcgb,
+     &fontl,
+     &bckgl,
+     &box1,
+     &box2,
+     &box3,
+     &box4,
+     &box5,
+     &box6,
+     &box7,
+     &box8,
+     &box9,
+     &box10,
+     &box11
+};
 
 
 // REGION: OBJECT SIMULATION
@@ -243,22 +283,18 @@ void label(Label *l){
 void movableBox(MovableBox *b){
     if (!b->enabled) return;
     dapush(activeGameObjects, b);
-    if (CheckCollisionCircleRec(Vector2Add(playerPos, Vector2Scale(dir, (speed+dashScale))), PLAYER_RADIUS, (Rectangle){b->x, b->y, b->w, b->h})){
+    if (CheckCollisionCircleRec(Vector2Add(playerPos, Vector2Scale(dir, (speed+dashScale)/b->mass)), PLAYER_RADIUS, (Rectangle){b->x, b->y, b->w, b->h})){
         bool collidesx, collidesy;
         for (int i = 0; i < activeColliders.count; i++) {
             Box col = activeColliders.items[i];
             if (!collidesx)
-                collidesx = CheckCollisionRecs((Rectangle){col.x, col.y, col.w, col.h}, (Rectangle){b->x+dir.x*(speed+dashScale), b->y, b->w+dir.x*(speed+dashScale), b->h});
+                collidesx = CheckCollisionRecs((Rectangle){col.x, col.y, col.w, col.h}, (Rectangle){b->x+dir.x*(speed+dashScale)/b->mass, b->y, b->w+dir.x*(speed+dashScale), b->h});
             if (!collidesy)
-                collidesy = CheckCollisionRecs((Rectangle){col.x, col.y, col.w, col.h}, (Rectangle){b->x, b->y+dir.y*(speed+dashScale), b->w, b->h+dir.y*(speed+dashScale)});
+                collidesy = CheckCollisionRecs((Rectangle){col.x, col.y, col.w, col.h}, (Rectangle){b->x, b->y+dir.y*(speed+dashScale)/b->mass, b->w, b->h+dir.y*(speed+dashScale)});
         }
-        b->x += dir.x*(speed+dashScale)*(int)!collidesx;
-        b->y += dir.y*(speed+dashScale)*(int)!collidesy;
-        playerPos = Vector2Subtract(playerPos, Vector2Scale(dir, (speed+dashScale)));
-        pushing = b;
-    }
-    else{
-        pushing = NULL;
+        b->x += dir.x*(speed+dashScale)*(float)!collidesx/b->mass;
+        b->y += dir.y*(speed+dashScale)*(float)!collidesy/b->mass;
+        playerPos = Vector2Subtract(playerPos, Vector2Scale(dir, (speed+dashScale)*(b->mass/b->mass)));
     }
     DrawRectangleV(worldspace((Vector2){b->x-2, b->y-2}), (Vector2){b->w+4, b->h+4}, (Color){0, 0, 0, 120});
     DrawRectangleV(worldspace((Vector2){b->x, b->y}), (Vector2){b->w, b->h}, b->col);
@@ -269,6 +305,24 @@ void box(Box *b){
     dapush(activeGameObjects, b);
     DrawRectangleV(worldspace((Vector2){b->x-2, b->y-2}), (Vector2){b->w+4, b->h+4}, (Color){0, 0, 0, 120});
     DrawRectangleV(worldspace((Vector2){b->x, b->y}), (Vector2){b->w, b->h}, b->col);
+}
+void allsim(){
+    for (int i = 0; i < sizeof(gameObjects)/sizeof(gameObjects[0]); i++){
+        switch (((Box*)gameObjects[i])->type){
+            case OBJ_BOX:
+                box((Box*)gameObjects[i]);
+                break;
+            case OBJ_MOVBOX:
+                movableBox((MovableBox*)gameObjects[i]);
+                break;
+            case OBJ_BTN:
+                button((Button*)gameObjects[i]);
+                break;
+            case OBJ_LABEL:
+                label((Label*)gameObjects[i]);
+                break;
+        }
+    }
 }
 
 
@@ -291,7 +345,6 @@ bool moveRight(){
 bool noMoveHoriz(){
     return ( IsKeyUp(KEY_D) || IsKeyUp(KEY_RIGHT) ) && ( IsKeyUp(KEY_A) || IsKeyUp(KEY_LEFT) );
 }
-
 // REGION: PLAYER LOGIC
 void dash(){
     if (IsKeyPressed(KEY_SPACE)){
@@ -301,6 +354,7 @@ void dash(){
                 dashScale /= 2;
             else
                 break;
+            // dashScale /= 2;
         }
     }
     dashScale *= 0.8f;
@@ -316,29 +370,30 @@ bool checkCollision(Vector2 futureOffset){
 }
 
 int main() {
+    RenderTexture2D GORT = LoadRenderTexture(SCRW, SCRH);
     play = (Button){
-        false, 10, SCRW/2-100, SCRH/3+75,  200, 50, LIGHTGRAY,    BLACK, "Play", 24, true, &playbtn
+        OBJ_BTN, false, 10, SCRW/2-100, SCRH/3+75,  200, 50, LIGHTGRAY,    BLACK, "Play", 24, true, &playbtn
     };
     pref = (Button){
-        false, 10, SCRW/2-100, SCRH/3+130, 200, 50, GRAY,         BLACK, "Preferences", 24, true, &optionsbtn
+        OBJ_BTN, false, 10, SCRW/2-100, SCRH/3+130, 200, 50, GRAY,         BLACK, "Preferences", 24, true, &optionsbtn
     };
     quit = (Button){
-        false, 10, SCRW/2-100, SCRH/3+185, 200, 50, DARKGRAY,     BLACK, "Exit", 24, true, &exitbtn
+        OBJ_BTN, false, 10, SCRW/2-100, SCRH/3+185, 200, 50, DARKGRAY,     BLACK, "Exit", 24, true, &exitbtn
     };
     cprf = (Button){
-        false, 10, SCRW/2-100, SCRH/3+185, 200, 50, GRAY,         BLACK, "Close", 24, false, &clsoptbtn
+        OBJ_BTN, false, 10, SCRW/2-100, SCRH/3+185, 200, 50, GRAY,         BLACK, "Close", 24, false, &clsoptbtn
     };
     fntb = (Button){
-        false, 10, SCRW/2+70, SCRH/3+75,  40, 40, DARKGRAY,      BLACK, " ", 24, false, &switchfont
+        OBJ_BTN, false, 10, SCRW/2+70, SCRH/3+75,  40, 40, DARKGRAY,      BLACK, " ", 24, false, &switchfont
     };
     bcgb = (Button){
-        false, 10, SCRW/2+70, SCRH/3+130,  40, 40, DARKGRAY,      BLACK, "V", 24, false, &switchbg
+        OBJ_BTN, false, 10, SCRW/2+70, SCRH/3+130,  40, 40, DARKGRAY,      BLACK, "X", 24, false, &switchbg
     };
     fontl = (Label){
-        WHITE, SCRW/2-110, SCRH/3+85, 24, "Font: ", false
+        OBJ_LABEL, WHITE, SCRW/2-110, SCRH/3+85, 24, "Font: ", false
     };
     bckgl = (Label){
-        WHITE, SCRW/2-110, SCRH/3+140, 24, "Background: ", false
+        OBJ_LABEL, WHITE, SCRW/2-110, SCRH/3+140, 24, "Background: ", false
     };
     InitWindow(SCRW, SCRH, title);
     fnt = font ? LoadFont("consola.ttf") : GetFontDefault();
@@ -348,38 +403,20 @@ int main() {
             BeginDrawing();
              ClearBackground(BLACK);
              DrawTextEx(fnt, title, (Vector2){SCRW/2-MeasureTextEx(fnt, title, 48, 2).x/2, SCRH/3}, 48, 2, WHITE);
-             button(&play);
-             button(&pref);
-             button(&cprf);
-             button(&quit);
-             button(&fntb);
-             button(&bcgb);
-             label(&fontl);
-             label(&bckgl);
+             allsim();
             EndDrawing();
         } else {     // GAME
             // PRE-FRAME
             activeColliders = (DA_Box){0};
             activeGameObjects = (DA_VoidP){0};
             dt = GetFrameTime();
-            speed = (IsKeyDown(KEY_LEFT_SHIFT) ? 600.f*dt : 300.f*dt)/(pushing == NULL ? 1 : pushing->mass);
+            speed = IsKeyDown(KEY_LEFT_SHIFT) ? 600.f*dt : 300.f*dt;
             // DRAWING
             BeginDrawing();
              background ? DrawTextureEx(green, worldspace((Vector2){-6400, -6400}), 0, 50, WHITE) : ClearBackground(BLACK);
              DrawCircleV(worldspace(playerPos), PLAYER_RADIUS+2, (Color){0, 0, 0, 120});
              DrawCircleV(worldspace(playerPos), PLAYER_RADIUS, RED);
-             DrawCircleV(worldspace(Vector2Add(Vector2Scale(dir, PLAYER_RADIUS-5), playerPos)), 10, (Color){128, 0, 0, 255});
-             box(&box1);
-             box(&box2);
-             box(&box3);
-             box(&box4);
-             box(&box5);
-             box(&box6);
-             box(&box7);
-             movableBox(&box8);
-             movableBox(&box9);
-             movableBox(&box10);
-             movableBox(&box11);
+             DrawCircleV(worldspace(Vector2Add(Vector2Scale(dir, PLAYER_RADIUS-10+speed+dashScale), playerPos)), 10, (Color){128, 0, 0, 255});
              // for (int i = 0; i < activeGameObjects.count; i++){
              //     Box gobj = *(Box*)activeGameObjects.items[i];
              //     Vector2 centerPos = {gobj.x+gobj.w/2, gobj.y+gobj.h/2};
@@ -387,6 +424,7 @@ int main() {
              // }
              // box9.enabled = false;
              // DrawFPS(10, 10);
+             allsim();
             EndDrawing();
             // MOVEMENT
             Vector2 fdir = dir;
